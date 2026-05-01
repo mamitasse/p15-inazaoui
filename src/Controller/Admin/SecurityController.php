@@ -3,14 +3,11 @@
 namespace App\Controller\Admin;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 class SecurityController extends AbstractController
 {
-    /**
-     * Page de connexion admin
-     */
     #[Route('/login', name: 'admin_login')]
     public function login(AuthenticationUtils $authenticationUtils)
     {
@@ -23,14 +20,9 @@ class SecurityController extends AbstractController
         ]);
     }
 
-    /**
-     * Route de déconnexion
-     * ⚠️ Symfony intercepte cette route automatiquement
-     */
     #[Route('/logout', name: 'app_logout')]
     public function logout(): void
     {
-        // Ce code ne sera jamais exécuté
         throw new \LogicException('Cette méthode est interceptée par Symfony.');
     }
 }

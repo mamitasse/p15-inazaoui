@@ -1,14 +1,14 @@
 security:
-    # Active le nouveau système de sécurité Symfony
-    enable_authenticator_manager: true
+    # ⚠️ SUPPRIMÉ en Symfony 7 :
+    # enable_authenticator_manager: true
 
-    # Gestion du hash des mots de passe
+    # Configuration du hash des mots de passe
     password_hashers:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
 
     providers:
         app_user_provider:
-            # Utilise la base de données (Entity User)
+            # Utilisation de l'entité User en base de données
             entity:
                 class: App\Entity\User
 
@@ -17,7 +17,7 @@ security:
 
     firewalls:
         dev:
-            # Désactive la sécurité pour les assets (css, js, images, profiler)
+            # Désactive la sécurité pour les assets et le profiler
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
 
@@ -25,27 +25,25 @@ security:
             lazy: true
             provider: app_user_provider
 
-            # Gestion du formulaire de connexion
+            # Authentification par formulaire
             form_login:
                 login_path: admin_login
                 check_path: admin_login
 
-            # (Optionnel mais recommandé)
-            # Permet de se déconnecter proprement
+            # Déconnexion
             logout:
                 path: app_logout
                 target: /
 
     role_hierarchy:
-        # Un admin est aussi un user
+        # Un admin a automatiquement les droits d'un user
         ROLE_ADMIN: ROLE_USER
 
     access_control:
-        # 🔒 Sécurisation des pages admin
-        # Seuls les admins peuvent accéder à /admin
+        # 🔒 Protection de toutes les routes /admin
         - { path: ^/admin, roles: ROLE_ADMIN }
 
-        # Le reste du site est accessible librement
+        # Le reste du site est accessible sans authentification
 
 when@test:
     security:

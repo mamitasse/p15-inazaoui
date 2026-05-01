@@ -5,64 +5,76 @@ namespace App\Controller;
 use App\Entity\Album;
 use App\Entity\Media;
 use App\Entity\User;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 class HomeController extends AbstractController
 {
-    /**
-     * @Route("/", name="home")
-     */
-    public function home()
+    // Page d'accueil du site.
+    #[Route('/', name: 'home')]
+    public function home(): \Symfony\Component\HttpFoundation\Response
     {
         return $this->render('front/home.html.twig');
     }
 
-    /**
-     * @Route("/guests", name="guests")
-     */
-    public function guests()
+    // Page publique qui liste les invités.
+    #[Route('/guests', name: 'guests')]
+    public function guests(EntityManagerInterface $entityManager): \Symfony\Component\HttpFoundation\Response
     {
-        $guests = $this->getDoctrine()->getRepository(User::class)->findBy(['admin' => false]);
+        $guests = $entityManager
+            ->getRepository(User::class)
+            ->findBy(['admin' => false]);
+
         return $this->render('front/guests.html.twig', [
-            'guests' => $guests
+            'guests' => $guests,
         ]);
     }
 
-    /**
-     * @Route("/guest/{id}", name="guest")
-     */
-    public function guest(int $id)
+    // Page publique d'un invité précis.
+    #[Route('/guest/{id}', name: 'guest')]
+    public function guest(int $id, EntityManagerInterface $entityManager): \Symfony\Component\HttpFoundation\Response
     {
-        $guest = $this->getDoctrine()->getRepository(User::class)->find($id);
+        $guest = $entityManager
+            ->getRepository(User::class)
+            ->find($id);
+
         return $this->render('front/guest.html.twig', [
-            'guest' => $guest
+            'guest' => $guest,
         ]);
     }
 
-    /**
-     * @Route("/portfolio/{id}", name="portfolio")
-     */
-    public function portfolio(?int $id = null)
+    // Page portfolio.
+    // Elle affiche les médias d'Ina, ou les médias d'un album si un id est fourni.
+    #[Route('/portfolio/{id?}', name: 'portfolio')]
+    public function portfolio(?int $id, EntityManagerInterface $entityManager): \Symfony\Component\HttpFoundation\Response
     {
-        $albums = $this->getDoctrine()->getRepository(Album::class)->findAll();
-        $album = $id ? $this->getDoctrine()->getRepository(Album::class)->find($id) : null;
-        $user = $this->getDoctrine()->getRepository(User::class)->findOneByAdmin(true);
+        $albums = $entityManager
+            ->getRepository(Album::class)
+            ->findAll();
+
+        $album = $id
+            ? $entityManager->getRepository(Album::class)->find($id)
+            : null;
+
+        $user = $entityManager
+            ->getRepository(User::class)
+            ->findOneBy(['admin' => true]);
 
         $medias = $album
-            ? $this->getDoctrine()->getRepository(Media::class)->findByAlbum($album)
-            : $this->getDoctrine()->getRepository(Media::class)->findByUser($user);
+            ? $entityManager->getRepository(Media::class)->findBy(['album' => $album])
+            : $entityManager->getRepository(Media::class)->findBy(['user' => $user]);
+
         return $this->render('front/portfolio.html.twig', [
             'albums' => $albums,
             'album' => $album,
-            'medias' => $medias
+            'medias' => $medias,
         ]);
     }
 
-    /**
-     * @Route("/about", name="about")
-     */
-    public function about()
+    // Page "Qui suis-je ?"
+    #[Route('/about', name: 'about')]
+    public function about(): \Symfony\Component\HttpFoundation\Response
     {
         return $this->render('front/about.html.twig');
     }

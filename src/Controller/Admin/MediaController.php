@@ -4,73 +4,59 @@ namespace App\Controller\Admin;
 
 use App\Entity\Media;
 use App\Form\MediaType;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
+#[Route('/admin/media')] // ✅ Préfixe commun
 class MediaController extends AbstractController
 {
-    /**
-     * @Route("/admin/media", name="admin_media_index")
-     */
-    public function index(Request $request)
+    // Liste des médias
+    #[Route('', name: 'admin_media_index')]
+    public function index(EntityManagerInterface $entityManager)
     {
-        $page = $request->query->getInt('page', 1);
-
-        $criteria = [];
-
-        if (!$this->isGranted('ROLE_ADMIN')) {
-            $criteria['user'] = $this->getUser();
-        }
-
-        $medias = $this->getDoctrine()->getRepository(Media::class)->findBy(
-            $criteria,
-            ['id' => 'ASC'],
-            25,
-            25 * ($page - 1)
-        );
-        $total = $this->getDoctrine()->getRepository(Media::class)->count([]);
+        $medias = $entityManager->getRepository(Media::class)->findAll();
 
         return $this->render('admin/media/index.html.twig', [
             'medias' => $medias,
-            'total' => $total,
-            'page' => $page
         ]);
     }
 
-    /**
-     * @Route("/admin/media/add", name="admin_media_add")
-     */
-    public function add(Request $request)
+    // Ajouter un média
+    #[Route('/add', name: 'admin_media_add')]
+    public function add(Request $request, EntityManagerInterface $entityManager)
     {
         $media = new Media();
-        $form = $this->createForm(MediaType::class, $media, ['is_admin' => $this->isGranted('ROLE_ADMIN')]);
+
+        $form = $this->createForm(MediaType::class, $media, [
+            'is_admin' => true
+        ]);
+
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            if (!$this->isGranted('ROLE_ADMIN')) {
-                $media->setUser($this->getUser());
-            }
-            $media->setPath('uploads/' . md5(uniqid()) . '.' . $media->getFile()->guessExtension());
-            $media->getFile()->move('uploads/', $media->getPath());
-            $this->getDoctrine()->getManager()->persist($media);
-            $this->getDoctrine()->getManager()->flush();
+            $entityManager->persist($media);
+            $entityManager->flush();
 
             return $this->redirectToRoute('admin_media_index');
         }
 
-        return $this->render('admin/media/add.html.twig', ['form' => $form->createView()]);
+        return $this->render('admin/media/add.html.twig', [
+            'form' => $form->createView(),
+        ]);
     }
 
-    /**
-     * @Route("/admin/media/delete/{id}", name="admin_media_delete")
-     */
-    public function delete(int $id)
+    // Supprimer un média
+    #[Route('/delete/{id}', name: 'admin_media_delete')]
+    public function delete(int $id, EntityManagerInterface $entityManager)
     {
-        $media = $this->getDoctrine()->getRepository(Media::class)->find($id);
-        $this->getDoctrine()->getManager()->remove($media);
-        $this->getDoctrine()->getManager()->flush();
-        unlink($media->getPath());
+        $media = $entityManager->getRepository(Media::class)->find($id);
+
+        if ($media) {
+            $entityManager->remove($media);
+            $entityManager->flush();
+        }
 
         return $this->redirectToRoute('admin_media_index');
     }
