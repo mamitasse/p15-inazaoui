@@ -14,14 +14,16 @@ class MediaController extends AbstractController
 {
     // Liste des médias
     #[Route('', name: 'admin_media_index')]
-    public function index(EntityManagerInterface $entityManager)
-    {
-        $medias = $entityManager->getRepository(Media::class)->findAll();
+public function index(EntityManagerInterface $entityManager)
+{
+    $medias = $entityManager->getRepository(Media::class)->findAll();
 
-        return $this->render('admin/media/index.html.twig', [
-            'medias' => $medias,
-        ]);
-    }
+    return $this->render('admin/media/index.html.twig', [
+        'medias' => $medias,
+        'total' => count($medias),
+        'page' => 1,
+    ]);
+}
 
     // Ajouter un média
     #[Route('/add', name: 'admin_media_add')]
