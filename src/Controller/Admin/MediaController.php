@@ -50,16 +50,16 @@ public function index(EntityManagerInterface $entityManager)
     }
 
     // Supprimer un média
-    #[Route('/delete/{id}', name: 'admin_media_delete')]
-    public function delete(int $id, EntityManagerInterface $entityManager)
-    {
-        $media = $entityManager->getRepository(Media::class)->find($id);
+    #[Route('/admin/media/delete/{id}', name: 'admin_media_delete', methods: ['POST'])]
+public function delete(Request $request, Media $media, EntityManagerInterface $entityManager)
+{
+    // Vérification CSRF
+    if ($this->isCsrfTokenValid('delete'.$media->getId(), $request->request->get('_token'))) {
 
-        if ($media) {
-            $entityManager->remove($media);
-            $entityManager->flush();
-        }
-
-        return $this->redirectToRoute('admin_media_index');
+        $entityManager->remove($media);
+        $entityManager->flush();
     }
+
+    return $this->redirectToRoute('admin_media_index');
+}
 }

@@ -65,16 +65,16 @@ class AlbumController extends AbstractController
     }
 
     // Supprimer un album
-    #[Route('/delete/{id}', name: 'admin_album_delete')]
-    public function delete(int $id, EntityManagerInterface $entityManager)
-    {
-        $album = $entityManager->getRepository(Album::class)->find($id);
+    #[Route('/admin/album/delete/{id}', name: 'admin_album_delete', methods: ['POST'])]
+public function delete(Request $request, Album $album, EntityManagerInterface $entityManager)
+{
+    // 🔐 Vérification du token CSRF
+    if ($this->isCsrfTokenValid('delete'.$album->getId(), $request->request->get('_token'))) {
 
-        if ($album) {
-            $entityManager->remove($album);
-            $entityManager->flush();
-        }
-
-        return $this->redirectToRoute('admin_album_index');
+        $entityManager->remove($album);
+        $entityManager->flush();
     }
+
+    return $this->redirectToRoute('admin_album_index');
+}
 }
