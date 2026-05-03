@@ -28,8 +28,8 @@ class MediaType extends AbstractType
                 // Objectif : accepter uniquement des images de 2 Mo maximum.
                 'constraints' => [
                     new File([
-                        // Taille maximale autorisée : 2 Mégaoctets.
-                        'maxSize' => '2M',
+                        // Taille maximale autorisée : 2 Mégaoctets.2Mo=2048k
+                        'maxSize' => '2048k',
 
                         // Vérification par MIME type, plus fiable que l’extension du fichier.
                         'mimeTypes' => [
