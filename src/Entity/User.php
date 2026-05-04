@@ -21,6 +21,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private bool $admin = false;
 
+    // Ajouté : permet de bloquer ou autoriser l'accès d'un invité.
+    // true = compte actif, false = compte bloqué.
+    #[ORM\Column]
+    private bool $isActive = true;
+
     // Nom utilisé maintenant comme identifiant de connexion : "ina"
     #[ORM\Column]
     private ?string $name = null;
@@ -31,11 +36,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 180, unique: true)]
     private ?string $email = null;
 
-    // Ajouté : rôles Symfony stockés en base
+    // Rôles Symfony stockés en base.
     #[ORM\Column(type: 'json')]
     private array $roles = [];
 
-    // Ajouté : mot de passe hashé stocké en base
+    // Mot de passe hashé stocké en base.
     #[ORM\Column]
     private ?string $password = null;
 
@@ -52,27 +57,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->id;
     }
 
-    // Modifié : Symfony utilise maintenant le champ "name" pour la connexion
+    // Symfony utilise le champ "email" pour la connexion.
     public function getUserIdentifier(): string
     {
-        return (string) $this->name;
+        return (string) $this->email;
     }
 
-    // Compatibilité avec anciennes versions Symfony
     public function getUsername(): string
     {
         return $this->getUserIdentifier();
     }
 
-    // Ajouté : retourne les rôles de l'utilisateur
     public function getRoles(): array
     {
         $roles = $this->roles;
 
-        // Tout utilisateur connecté a au minimum ROLE_USER
         $roles[] = 'ROLE_USER';
 
-        // Si admin = true, alors on ajoute ROLE_ADMIN
         if ($this->admin) {
             $roles[] = 'ROLE_ADMIN';
         }
@@ -80,7 +81,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return array_unique($roles);
     }
 
-    // Ajouté : permet d’enregistrer les rôles en base
     public function setRoles(array $roles): static
     {
         $this->roles = $roles;
@@ -88,13 +88,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    // Ajouté : retourne le mot de passe hashé
     public function getPassword(): ?string
     {
         return $this->password;
     }
 
-    // Ajouté : enregistre le mot de passe hashé
     public function setPassword(string $password): static
     {
         $this->password = $password;
@@ -102,13 +100,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    // Pas de salt séparé avec les hash modernes
     public function getSalt(): ?string
     {
         return null;
     }
 
-    // Nettoyage des données sensibles temporaires si besoin
     public function eraseCredentials(): void
     {
     }
@@ -163,5 +159,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setAdmin(bool $admin): void
     {
         $this->admin = $admin;
+    }
+
+    // Ajouté : indique si le compte est actif ou bloqué.
+    public function isActive(): bool
+    {
+        return $this->isActive;
+    }
+
+    // Ajouté : permet de bloquer ou débloquer un compte.
+    public function setIsActive(bool $isActive): static
+    {
+        $this->isActive = $isActive;
+
+        return $this;
     }
 }

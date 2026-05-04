@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Invités{% endblock %}
+
+{% block body %}
+<h1>Liste des invités</h1>
+
+<table border="1" cellpadding="10">
+    <tr>
+        <th>Email</th>
+        <th>Nom</th>
+        <th>Statut</th>
+        <th>Action</th>
+    </tr>
+
+    {% for guest in guests %}
+        <tr>
+            <td>{{ guest.email }}</td>
+            <td>{{ guest.name }}</td>
+            <td>
+                {{ guest.isActive ? 'Actif' : 'Bloqué' }}
+            </td>
+            <td>
+                <a href="{{ path('admin_guest_toggle', {id: guest.id}) }}">
+                    {{ guest.isActive ? 'Bloquer' : 'Débloquer' }}
+                </a>
+            </td>
+        </tr>
+    {% else %}
+        <tr>
+            <td colspan="4">Aucun invité</td>
+        </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}
