@@ -2,11 +2,13 @@
 
 namespace App\Security;
 
+use App\Repository\UserRepository;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\Security\Http\Authenticator\AbstractLoginFormAuthenticator;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\CsrfTokenBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\RememberMeBadge;
@@ -22,29 +24,43 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
 
     public const LOGIN_ROUTE = 'admin_login';
 
-    public function __construct(private UrlGeneratorInterface $urlGenerator)
-    {
+    public function __construct(
+        private UrlGeneratorInterface $urlGenerator,
+        private UserRepository $userRepository
+    ) {
     }
 
     public function authenticate(Request $request): Passport
     {
-        // MODIFIÉ : on récupère l'email envoyé par le formulaire.
+        // Récupération de l'email depuis le formulaire
         $email = $request->request->get('_username', '');
 
-        // MODIFIÉ : on garde le dernier email saisi si erreur de connexion.
+        // Sauvegarde pour pré-remplir en cas d'erreur
         $request->getSession()->set(SecurityRequestAttributes::LAST_USERNAME, $email);
 
         return new Passport(
-            // MODIFIÉ : Symfony va chercher l'utilisateur avec cet email.
-            new UserBadge($email),
+            new UserBadge($email, function ($userIdentifier) {
 
-            // MODIFIÉ : récupération du mot de passe depuis le champ "_password".
+                // Recherche utilisateur en base
+                $user = $this->userRepository->findOneBy(['email' => $userIdentifier]);
+
+                if (!$user) {
+                    throw new CustomUserMessageAuthenticationException('Utilisateur introuvable.');
+                }
+
+                // 🔥 BLOQUAGE SI COMPTE DÉSACTIVÉ
+                if (!$user->isActive()) {
+                    throw new CustomUserMessageAuthenticationException('Votre compte est bloqué.');
+                }
+
+                return $user;
+            }),
+
+            // Vérification du mot de passe
             new PasswordCredentials($request->request->get('_password', '')),
-            [
-                // Sécurité CSRF du formulaire de connexion.
-                new CsrfTokenBadge('authenticate', $request->request->get('_csrf_token')),
 
-                // Option "remember me".
+            [
+                new CsrfTokenBadge('authenticate', $request->request->get('_csrf_token')),
                 new RememberMeBadge(),
             ]
         );
@@ -52,12 +68,13 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
+        // Redirection si l'utilisateur voulait accéder à une page protégée
         if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {
             return new RedirectResponse($targetPath);
         }
 
-        // MODIFIÉ : après connexion, on redirige vers l'admin médias.
-        return new RedirectResponse($this->urlGenerator->generate('admin_media_index'));
+        // Redirection après login
+        return new RedirectResponse($this->urlGenerator->generate('admin_guest_index'));
     }
 
     protected function getLoginUrl(Request $request): string
