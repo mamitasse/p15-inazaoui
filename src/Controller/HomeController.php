@@ -44,33 +44,45 @@ class HomeController extends AbstractController
         ]);
     }
 
-    // Page portfolio.
-    // Elle affiche les médias d'Ina, ou les médias d'un album si un id est fourni.
-    #[Route('/portfolio/{id?}', name: 'portfolio')]
-    public function portfolio(?int $id, EntityManagerInterface $entityManager): \Symfony\Component\HttpFoundation\Response
-    {
-        $albums = $entityManager
-            ->getRepository(Album::class)
-            ->findAll();
+   // Page portfolio.
+// Elle affiche uniquement les médias publics autorisés :
+// - médias d'Ina
+// - médias des invités actifs
+// - jamais les médias des invités bloqués
+#[Route('/portfolio/{id?}', name: 'portfolio')]
+public function portfolio(?int $id, EntityManagerInterface $entityManager): \Symfony\Component\HttpFoundation\Response
+{
+    $albums = $entityManager
+        ->getRepository(Album::class)
+        ->findAll();
 
-        $album = $id
-            ? $entityManager->getRepository(Album::class)->find($id)
-            : null;
+    $album = $id
+        ? $entityManager->getRepository(Album::class)->find($id)
+        : null;
 
-        $user = $entityManager
-            ->getRepository(User::class)
-            ->findOneBy(['admin' => true]);
+    $queryBuilder = $entityManager
+        ->getRepository(Media::class)
+        ->createQueryBuilder('m')
+        ->leftJoin('m.user', 'u')
+        ->addSelect('u')
+        ->andWhere('u.admin = true OR u.isActive = true');
 
-        $medias = $album
-            ? $entityManager->getRepository(Media::class)->findBy(['album' => $album])
-            : $entityManager->getRepository(Media::class)->findBy(['user' => $user]);
-
-        return $this->render('front/portfolio.html.twig', [
-            'albums' => $albums,
-            'album' => $album,
-            'medias' => $medias,
-        ]);
+    if ($album) {
+        $queryBuilder
+            ->andWhere('m.album = :album')
+            ->setParameter('album', $album);
     }
+
+    $medias = $queryBuilder
+        ->getQuery()
+        ->getResult();
+
+    return $this->render('front/portfolio.html.twig', [
+        'albums' => $albums,
+        'album' => $album,
+        'medias' => $medias,
+    ]);
+}
 
     // Page "Qui suis-je ?"
     #[Route('/about', name: 'about')]
