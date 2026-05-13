@@ -18,18 +18,26 @@ class HomeController extends AbstractController
         return $this->render('front/home.html.twig');
     }
 
-    // Page publique qui liste les invités.
-    #[Route('/guests', name: 'guests')]
-    public function guests(EntityManagerInterface $entityManager): \Symfony\Component\HttpFoundation\Response
-    {
-        $guests = $entityManager
-            ->getRepository(User::class)
-            ->findBy(['admin' => false]);
+   // Page publique qui liste les invités actifs.
+#[Route('/guests', name: 'guests')]
+public function guests(EntityManagerInterface $entityManager): \Symfony\Component\HttpFoundation\Response
+{
+    // Optimisation :
+    // on affiche uniquement les invités actifs côté Front Office.
+    // Les invités bloqués ne doivent pas être visibles publiquement.
+    $guests = $entityManager
+        ->getRepository(User::class)
+        ->createQueryBuilder('u')
+        ->andWhere('u.admin = false')
+        ->andWhere('u.isActive = true')
+        ->orderBy('u.name', 'ASC')
+        ->getQuery()
+        ->getResult();
 
-        return $this->render('front/guests.html.twig', [
-            'guests' => $guests,
-        ]);
-    }
+    return $this->render('front/guests.html.twig', [
+        'guests' => $guests,
+    ]);
+}
 
     // Page publique d'un invité précis.
     #[Route('/guest/{id}', name: 'guest')]
