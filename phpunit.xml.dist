@@ -27,6 +27,11 @@
         <include>
             <directory suffix=".php">src</directory>
         </include>
+        <exclude>
+            <directory>src/DataFixtures</directory>
+             <file>src/Controller/Admin/SecurityController.php</file>
+
+        </exclude>
     </coverage>
 
     <listeners>

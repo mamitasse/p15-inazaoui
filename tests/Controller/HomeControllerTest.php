@@ -72,4 +72,32 @@ class HomeControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
     }
+
+    public function testAboutPageIsSuccessful(): void
+{
+    $client = static::createClient();
+
+    $client->request('GET', '/about');
+
+    $this->assertResponseIsSuccessful();
+}
+
+public function testGuestDetailPageIsSuccessful(): void
+{
+    $client = static::createClient();
+
+    $client->request('GET', '/guest/2');
+
+    $this->assertResponseIsSuccessful();
+}
+public function testPortfolioPageWithAlbumIsSuccessful(): void
+{
+    $client = static::createClient();
+
+    // Dans les fixtures, l'album créé a normalement l'id 1.
+    $client->request('GET', '/portfolio/1');
+
+    $this->assertResponseIsSuccessful();
+}
+
 }

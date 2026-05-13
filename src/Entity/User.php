@@ -105,6 +105,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return null;
     }
 
+    #[\Deprecated(
+    reason: 'Méthode vide conservée pour compatibilité avec UserInterface.'
+    )]
     public function eraseCredentials(): void
     {
     }

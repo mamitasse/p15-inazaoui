@@ -27,23 +27,23 @@ class MediaType extends AbstractType
                 // Validation du fichier uploadé.
                 // Objectif : accepter uniquement des images de 2 Mo maximum.
                 'constraints' => [
-                    new File([
-                        // Taille maximale autorisée : 2 Mégaoctets.2Mo=2048k
-                        'maxSize' => '2048k',
+                    new File(
+                        // Taille maximale autorisée : 2 Mégaoctets. 2 Mo = 2048k.
+                        maxSize: '2048k',
 
                         // Vérification par MIME type, plus fiable que l’extension du fichier.
-                        'mimeTypes' => [
+                        mimeTypes: [
                             'image/jpeg',
                             'image/png',
                             'image/webp',
                         ],
 
                         // Message affiché si le fichier n’est pas une image autorisée.
-                        'mimeTypesMessage' => 'Veuillez choisir une image valide : JPG, PNG ou WEBP.',
+                        mimeTypesMessage: 'Veuillez choisir une image valide : JPG, PNG ou WEBP.',
 
                         // Message affiché si le fichier dépasse 2 Mo.
-                        'maxSizeMessage' => 'L’image ne doit pas dépasser 2 Mo.',
-                    ]),
+                        maxSizeMessage: 'L’image ne doit pas dépasser 2 Mo.',
+                    ),
                 ],
             ])
             ->add('title', TextType::class, [
