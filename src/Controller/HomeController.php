@@ -8,6 +8,7 @@ use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\HttpFoundation\Request;
 
 class HomeController extends AbstractController
 {
@@ -18,24 +19,52 @@ class HomeController extends AbstractController
         return $this->render('front/home.html.twig');
     }
 
-   // Page publique qui liste les invités actifs.
+// Page publique qui liste les invités actifs avec pagination.
 #[Route('/guests', name: 'guests')]
-public function guests(EntityManagerInterface $entityManager): \Symfony\Component\HttpFoundation\Response
-{
-    // Optimisation :
-    // on affiche uniquement les invités actifs côté Front Office.
-    // Les invités bloqués ne doivent pas être visibles publiquement.
-    $guests = $entityManager
+public function guests(
+    Request $request,
+    EntityManagerInterface $entityManager
+): \Symfony\Component\HttpFoundation\Response {
+    // Numéro de page demandé dans l’URL.
+    // Exemple : /guests?page=2
+    $page = max(1, $request->query->getInt('page', 1));
+
+    // Nombre d’invités affichés par page.
+    $limit = 12;
+
+    // Requête optimisée :
+    // - uniquement les invités non admin ;
+    // - uniquement les invités actifs ;
+    // - tri alphabétique ;
+    // - pagination pour éviter de charger toute la table.
+    $queryBuilder = $entityManager
         ->getRepository(User::class)
         ->createQueryBuilder('u')
         ->andWhere('u.admin = false')
         ->andWhere('u.isActive = true')
         ->orderBy('u.name', 'ASC')
+        ->setFirstResult(($page - 1) * $limit)
+        ->setMaxResults($limit);
+
+    $guests = $queryBuilder
         ->getQuery()
         ->getResult();
 
+    // Requête légère pour connaître le nombre total d’invités actifs.
+    $totalGuests = $entityManager
+        ->getRepository(User::class)
+        ->createQueryBuilder('u')
+        ->select('COUNT(u.id)')
+        ->andWhere('u.admin = false')
+        ->andWhere('u.isActive = true')
+        ->getQuery()
+        ->getSingleScalarResult();
+
     return $this->render('front/guests.html.twig', [
         'guests' => $guests,
+        'page' => $page,
+        'limit' => $limit,
+        'totalGuests' => $totalGuests,
     ]);
 }
 

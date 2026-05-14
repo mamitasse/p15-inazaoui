@@ -1,18 +1,117 @@
 {% extends 'front.html.twig' %}
 
 {% block front %}
-    <div class="row">
-        <div class="col-12">
-            <h3 class="mb-5">Invités</h3>
-            <div class="guests d-flex flex-column">
-                {% for guest in guests %}
-                    <div class="guest py-5 d-flex justify-content-between align-items-center">
-                        <h4>{{ guest.name }} ({{ guest.medias|length }})</h4>
-                        <a href="{{ path('guest', {id: guest.id}) }}">découvrir</a>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-{% endblock %}
 
+<div class="row">
+
+    <div class="col-12">
+
+        <div class="d-flex justify-content-between align-items-center mb-5">
+
+            <h2>Invités</h2>
+
+        </div>
+
+        <div class="guests d-flex flex-column">
+
+            {% for guest in guests %}
+
+                <div class="guest py-5 d-flex justify-content-between align-items-center">
+
+                    <h4>
+                        {{ guest.name }}
+                        ({{ guest.medias|length }})
+                    </h4>
+
+                    <a href="{{ path('guest', {id: guest.id}) }}">
+                        découvrir
+                    </a>
+
+                </div>
+
+            {% else %}
+
+                <p>
+                    Aucun invité disponible.
+                </p>
+
+            {% endfor %}
+
+        </div>
+
+        {# PAGINATION #}
+
+        {% set totalPages = (totalGuests / limit)|round(0, 'ceil') %}
+
+        {% if totalPages > 1 %}
+
+            <div class="d-flex justify-content-center mt-5">
+
+                <nav>
+
+                    <ul class="pagination">
+
+                        {# PRECEDENT #}
+
+                        {% if page > 1 %}
+
+                            <li class="page-item">
+
+                                <a
+                                    class="page-link"
+                                    href="{{ path('guests', {page: page - 1}) }}"
+                                >
+                                    Précédent
+                                </a>
+
+                            </li>
+
+                        {% endif %}
+
+                        {# NUMEROS #}
+
+                        {% for i in 1..totalPages %}
+
+                            <li class="page-item {{ i == page ? 'active' : '' }}">
+
+                                <a
+                                    class="page-link"
+                                    href="{{ path('guests', {page: i}) }}"
+                                >
+                                    {{ i }}
+                                </a>
+
+                            </li>
+
+                        {% endfor %}
+
+                        {# SUIVANT #}
+
+                        {% if page < totalPages %}
+
+                            <li class="page-item">
+
+                                <a
+                                    class="page-link"
+                                    href="{{ path('guests', {page: page + 1}) }}"
+                                >
+                                    Suivant
+                                </a>
+
+                            </li>
+
+                        {% endif %}
+
+                    </ul>
+
+                </nav>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}
