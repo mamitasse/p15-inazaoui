@@ -33,6 +33,7 @@ public function guests(
     $limit = 12;
 
     // Requête optimisée :
+    
     // - uniquement les invités non admin ;
     // - uniquement les invités actifs ;
     // - tri alphabétique ;
