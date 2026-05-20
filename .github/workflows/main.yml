@@ -2,14 +2,31 @@ name: CI Symfony
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
 
 jobs:
   tests:
     name: Tests and static checks
     runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mariadb:10.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: p15_inazaoui_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      APP_ENV: test
+      DATABASE_URL: mysql://root:root@127.0.0.1:3306/p15_inazaoui_test?serverVersion=mariadb-10.4.32
 
     steps:
       - name: Checkout du projet
@@ -30,6 +47,20 @@ jobs:
 
       - name: Vérification syntaxe Twig
         run: php bin/console lint:twig templates
+
+      - name: Attendre MySQL
+        run: |
+          until mysqladmin ping -h 127.0.0.1 -uroot -proot --silent; do
+            echo "En attente de MySQL..."
+            sleep 2
+          done
+
+      - name: Préparation de la base de test
+        run: |
+          php bin/console doctrine:database:drop --force --if-exists --env=test
+          php bin/console doctrine:database:create --env=test
+          php bin/console doctrine:migrations:migrate --no-interaction --env=test
+          php bin/console doctrine:fixtures:load --no-interaction --env=test
 
       - name: Lancement des tests PHPUnit
         run: php bin/phpunit
