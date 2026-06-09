@@ -9,7 +9,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 
-#[Route('/admin/album')] // ✅ Préfixe commun pour toutes les routes
+#[Route('/admin/album')] // ✅ Préfixe commun pour toutes les routes AVANT ANNOTATION
 class AlbumController extends AbstractController
 {
     // Liste des albums
